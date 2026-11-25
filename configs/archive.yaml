@@ -1,0 +1,41 @@
+# Upworthy Research Archive (Matias, Munger, Le Quere & Ebersole, 2021). CC BY 4.0.
+# Docs: https://upworthy.natematias.com/about-the-archive  Data: https://osf.io/jd64p/
+source: upworthy
+release: "OSF jd64p, files uploaded 2021-05-03 (package exports dated 2020-03-12 and 2021-01-12)"
+published_benchmark_tests: 32487   # exploratory 4,873 + confirmatory 22,743 + holdout 4,871
+files:
+  - split: exploratory
+    file: upworthy-archive-exploratory-packages-03.12.2020.csv
+    url: https://osf.io/download/3vqmp/
+    sha256: 8368313b060f4015a0c6fb34e6d788163cee29554144aba9390b14922eb9d8ce
+  - split: confirmatory
+    file: upworthy-archive-confirmatory-packages-03.12.2020.csv
+    url: https://osf.io/download/vy8mj/
+    sha256: b2a88288c88f2b67d40413c9bdbebe79a1c0b5d9a9354180549f59f3bfff685f
+  - split: holdout
+    file: upworthy-archive-holdout-packages-03.12.2020.csv
+    url: https://osf.io/download/ynf3k/
+    sha256: 93832660b831aca16bbe314c60dba4a6815b0a5f9cdded1217671cfbfa5186ea
+  - split: undeployed
+    file: upworthy-archive-undeployed-packages.01.12.2021.csv
+    url: https://osf.io/download/jgy7c/
+    sha256: ea6a7bf23dc2a8edc3fe7e5eedbba0f9149a1dbd0640e89fdcacc1a156d8de82
+deployed_splits: [exploratory, confirmatory, holdout]
+
+# The 2024 archive update added a randomization-problem column (documented as
+# `problem`, also written `randomization_imbalace_risk`). The OSF files above
+# predate it, so the flag is RECONSTRUCTED from the documented rule:
+# "set to 1 for all tests between June 25, 2013 and January 10, 2014".
+problem_window:
+  start: "2013-06-25"
+  end: "2014-01-10"     # inclusive (whole day)
+  source_url: https://upworthy.natematias.com/about-the-archive
+
+analysis:
+  allocation_assumption: equal     # no planned allocation is published; documented assumption
+  reference_arm_rule: earliest_created   # predeclared exploratory reference arm (no control is identified)
+  alpha: 0.05
+  srm_alpha: 0.001
+  min_expected_count: 5            # below this, SRM uses a Monte Carlo multinomial test
+  srm_mc_draws: 20000
+  sensitivity_power: 0.8           # MDE reported at this power for each historical test

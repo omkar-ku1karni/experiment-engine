@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>5143605e220cb80002000076 · Experiment readout</title>
+<style>
+  :root { --ink:#1b2430; --muted:#5b6675; --line:#d9dee5; --bg:#ffffff; --soft:#f4f6f8;
+          --ship:#1d7a4f; --noship:#b23b2e; --inc:#8a6d1a; --blk:#4b4f58; }
+  @page { size: A4; margin: 14mm 14mm 12mm; }
+  * { box-sizing: border-box; }
+  body { font: 10px/1.4 -apple-system, "Segoe UI", Helvetica, Arial, sans-serif; color: var(--ink); background: var(--bg); margin: 0; }
+  .page { max-width: 800px; margin: 0 auto; padding: 18px 20px; }
+  header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid var(--ink); padding-bottom: 8px; }
+  h1 { font-size: 17px; margin: 0 0 2px; }
+  h2 { font-size: 10.5px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin: 11px 0 4px; }
+  .meta { color: var(--muted); font-size: 9.5px; text-align: right; line-height: 1.5; }
+  .badge { display: inline-block; padding: 3px 10px; border-radius: 3px; color: #fff; font-weight: 700; font-size: 12px; letter-spacing: .04em; }
+  .ship { background: var(--ship); } .no_ship { background: var(--noship); } .inconclusive { background: var(--inc); } .blocked { background: var(--blk); }
+  .src { display:inline-block; font-size: 9px; padding: 1px 6px; border: 1px solid var(--line); border-radius: 3px; color: var(--muted); margin-left: 6px; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { text-align: left; padding: 2px 6px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { color: var(--muted); font-weight: 600; font-size: 9.5px; }
+  td.num { font-variant-numeric: tabular-nums; text-align: right; white-space: nowrap; }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0 18px; }
+  .grid.wide { grid-template-columns: 1.35fr 1fr; }
+  .kv th { white-space: nowrap; width: 1%; }
+  .trace td, .trace th { font-size: 9px; }
+  .verdict { background: var(--soft); border-left: 4px solid var(--ink); padding: 8px 10px; margin-top: 10px; }
+  .codes code { display: inline-block; background: var(--soft); border: 1px solid var(--line); padding: 0 4px; margin: 1px 2px 1px 0; font-size: 9px; }
+  .pass { color: var(--ship); font-weight: 600; } .fail { color: var(--noship); font-weight: 600; } .warn { color: var(--inc); font-weight: 600; }
+  ul { margin: 3px 0 0 16px; padding: 0; }
+  footer { margin-top: 12px; border-top: 1px solid var(--line); padding-top: 6px; color: var(--muted); font-size: 8.5px; }
+  svg text { font: 9px -apple-system, Helvetica, Arial, sans-serif; fill: var(--muted); }
+</style>
+</head>
+<body><div class="page">
+<header>
+  <div>
+    <h1>Upworthy headline test 5143605e22…</h1>
+    <div><span class="badge inconclusive">INCONCLUSIVE</span>
+      <span class="src">HISTORICAL ARCHIVE (Upworthy)</span><span class="src">non-actionable</span></div>
+  </div>
+  <div class="meta">Experiment <b>5143605e220cb80002000076</b><br>Run archive-813a513967<br>
+    Engine v0.1.0 · config 1e71201faa43<br>As of 2026-11-24</div>
+</header>
+
+<h2>Hypothesis and design</h2>
+<div class="grid">
+  <div>Historical headline/image test: which package earns the most clicks? (No hypothesis is recorded in the archive.)</div>
+  <table class="kv"><tr><th>Split</th><td>confirmatory</td></tr><tr><th>Created</th><td>2013-03-17</td></tr><tr><th>Arms</th><td>5</td></tr><tr><th>Impressions</th><td>20,596</td></tr><tr><th>Allocation</th><td>equal (assumed; not recorded in source)</td></tr><tr><th>Reference arm</th><td>pkg-40470 (earliest-created; predeclared rule)</td></tr></table>
+</div>
+
+<h2>Integrity verdict: <span class="warn">warning</span></h2>
+<table>
+  <tr><th>Rule</th><th>Severity</th><th>Status</th><th>Observed</th><th>Threshold</th></tr>
+  <tr><td>R001_SCHEMA_VALID</td><td>critical</td>
+    <td class="pass">pass</td>
+    <td></td><td></td></tr><tr><td>R002_MIN_TWO_ARMS</td><td>critical</td>
+    <td class="pass">pass</td>
+    <td>5</td><td>2</td></tr><tr><td>R003_SRM</td><td>critical</td>
+    <td class="pass">pass</td>
+    <td>p=0.783 (chi_square)</td><td>p&lt;0.001</td></tr><tr><td>R004_SRM_SMALL_EXPECTED</td><td>info</td>
+    <td class="pass">pass</td>
+    <td>4119.2</td><td>5</td></tr><tr><td>R005_DOCUMENTED_RANDOMIZATION_PROBLEM</td><td>critical</td>
+    <td class="pass">pass</td>
+    <td>2013-03-17</td><td>2013-06-25..2014-01-10</td></tr><tr><td>R006_ZERO_EVENT_ARM</td><td>warning</td>
+    <td class="pass">pass</td>
+    <td></td><td></td></tr><tr><td>R007_DUPLICATE_STIMULUS</td><td>info</td>
+    <td class="pass">pass</td>
+    <td></td><td></td></tr><tr><td>R008_CONTROL_IDENTIFIED</td><td>warning</td>
+    <td class="warn">fail</td>
+    <td>none recorded</td><td></td></tr>
+</table>
+
+<h2>Primary metric and uncertainty</h2>
+
+<div class="grid wide">
+  <table class="kv"><tr><th>Metric</th><td class="num">click-through rate (clicks / impressions)</td></tr><tr><th>Comparison</th><td class="num">pkg-40474 vs pkg-40470 (highest-CTR arm vs reference)</td></tr><tr><th>Reference CTR</th><td class="num">0.01005</td></tr><tr><th>Difference</th><td class="num">0.01883</td></tr><tr><th>Relative lift</th><td class="num">+187.40%</td></tr><tr><th>Interval (Newcombe, Bonferroni)</th><td class="num">[0.01134, 0.02675]</td></tr><tr><th>Holm-adjusted p</th><td class="num">2.71e-09</td></tr><tr><th>Omnibus homogeneity p</th><td class="num">1.82e-18</td></tr><tr><th>Arm comparisons</th><td class="num">4 vs reference</td></tr><tr><th>Sensitivity: relative MDE at 80% power</th><td class="num">+71.21%</td></tr></table>
+  <div><svg width="330" height="74" viewBox="0 0 330 74" role="img" aria-label="effect interval"><line x1="47.3" y1="8" x2="47.3" y2="56" stroke="#9aa3ad" stroke-dasharray="3 3"/><text x="47.3" y="68" text-anchor="middle">0</text><line x1="147.1" y1="34" x2="282.7" y2="34" stroke="#1b2430" stroke-width="2.5"/><line x1="147.1" y1="27" x2="147.1" y2="41" stroke="#1b2430" stroke-width="2"/><line x1="282.7" y1="27" x2="282.7" y2="41" stroke="#1b2430" stroke-width="2"/><circle cx="213.0" cy="34" r="4.5" fill="#1b2430"/><text x="147.1" y="23" text-anchor="middle">+0.01134</text><text x="282.7" y="23" text-anchor="middle">+0.02675</text></svg><div style="color:var(--muted);font-size:9px">Highest-CTR arm vs reference; interval simultaneous over the test&#39;s comparisons. Exploratory.</div></div>
+</div>
+
+
+<h2>Guardrails</h2>
+<p>The archive records no guardrail metrics (HIST_NO_GUARDRAILS).</p>
+
+<div class="verdict">
+  <b>Recommendation: INCONCLUSIVE</b> — historical statistical readout only: without a commercial threshold, guardrails or a recorded control, no launch decision is possible.
+  <div class="codes" style="margin-top:4px"><code title="Archive records carry no predeclared minimum worthwhile effect.">HIST_NO_COMMERCIAL_THRESHOLD</code> Archive records carry no predeclared minimum worthwhile effect.<br><code title="Archive records carry no guardrail metrics.">HIST_NO_GUARDRAILS</code> Archive records carry no guardrail metrics.<br><code title="No control arm is recorded; comparisons use a predeclared exploratory reference arm.">HIST_NO_CONTROL</code> No control arm is recorded; comparisons use a predeclared exploratory reference arm.<br><code title="At least one arm differs from the reference after Holm adjustment.">EVID_DIFFERENCE_DETECTED</code> At least one arm differs from the reference after Holm adjustment.<br></div>
+</div>
+
+<div class="grid">
+  <div><h2>Next steps</h2><ul><li>Use as descriptive evidence about headline performance only.</li><li>For a launch decision, rerun as a designed experiment with a control, δ and guardrails.</li></ul></div>
+  <div><h2>Missing evidence and limitations</h2><ul><li>Archive data are arm-level aggregates: no user-level outcomes, covariates, revenue, guardrails or interim looks exist.</li><li>No control, planned sample size or decision threshold is recorded; allocation is assumed equal.</li><li>Randomization-problem flag is reconstructed from the documented rule (2013-06-25 to 2014-01-10).</li></ul></div>
+</div>
+
+<h2>Decision trace</h2>
+<table class="trace"><tr><th>#</th><th>Rule</th><th>Outcome</th><th>Detail</th></tr>
+<tr><td>1</td><td>integrity_gate</td><td>pass</td><td>no critical integrity failures</td></tr><tr><td>2</td><td>historical_readout</td><td>non_actionable</td><td>archive record: statistical readout only; commercial threshold, guardrails and control are absent</td></tr></table>
+
+<footer>Source: Upworthy Research Archive (Matias et al., 2021; CC BY 4.0), OSF jd64p. OSF jd64p, files uploaded 2021-05-03 (package exports dated 2020-03-12 and 2021-01-12).</footer>
+</div></body></html>

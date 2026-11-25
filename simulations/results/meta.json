@@ -1,0 +1,23 @@
+{
+  "config_hash": "7f329fe14303",
+  "replications": 10000,
+  "seed": 20261124,
+  "benches": {
+    "fixed": {
+      "scenarios": 36,
+      "seconds": 9.7
+    },
+    "srm": {
+      "scenarios": 15,
+      "seconds": 0.1
+    },
+    "sequential": {
+      "scenarios": 120,
+      "seconds": 1.3
+    },
+    "cuped": {
+      "scenarios": 32,
+      "seconds": 28.1
+    }
+  }
+}

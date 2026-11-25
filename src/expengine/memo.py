@@ -1,0 +1,252 @@
+"""One-page decision memos (HTML, optionally PDF via headless Chromium).
+
+Layout: experiment and run id -> hypothesis and design -> integrity verdict -> primary metric
+and uncertainty -> guardrail table -> recommendation and reason codes -> next steps and
+missing evidence -> decision trace. Every number comes from a persisted run; nothing is invented.
+Memos are deterministic for a given run and `as_of` date.
+"""
+
+from __future__ import annotations
+
+import argparse
+import json
+import sys
+from datetime import date
+from pathlib import Path
+
+import pandas as pd
+from jinja2 import Environment, FileSystemLoader, select_autoescape
+
+from expengine import decision as dec
+from expengine.config import DATA, REPORTS, load_yaml
+
+TEMPLATES = Path(__file__).parent / "templates"
+LABEL = {"ship": "SHIP", "no_ship": "NO SHIP", "inconclusive": "INCONCLUSIVE", "blocked": "BLOCKED"}
+
+
+def _f(x, pct=False, digits=4):
+    if x is None or (isinstance(x, float) and x != x):
+        return "n/a"
+    return f"{x:+.{digits - 2}%}" if pct else f"{x:,.{digits}f}"
+
+
+def effect_svg(est: float, lo: float, hi: float, delta: float | None, width=330, height=74) -> str:
+    """Inline SVG: interval, point estimate, zero line and (if any) the delta line."""
+    vals = [v for v in (est, lo, hi, 0.0, delta) if v is not None]
+    a, b = min(vals), max(vals)
+    pad = (b - a) * 0.15 or 1e-6
+    a, b = a - pad, b + pad
+    x = lambda v: 12 + (v - a) / (b - a) * (width - 24)  # noqa: E731
+    y = 34
+    parts = [f'<svg width="{width}" height="{height}" viewBox="0 0 {width} {height}" role="img" aria-label="effect interval">',
+             f'<line x1="{x(0):.1f}" y1="8" x2="{x(0):.1f}" y2="56" stroke="#9aa3ad" stroke-dasharray="3 3"/>',
+             f'<text x="{x(0):.1f}" y="68" text-anchor="middle">0</text>']
+    if delta is not None:
+        parts += [f'<line x1="{x(delta):.1f}" y1="8" x2="{x(delta):.1f}" y2="56" stroke="#1d7a4f" stroke-width="1.5"/>',
+                  f'<text x="{x(delta):.1f}" y="68" text-anchor="middle" style="fill:#1d7a4f">δ {delta:g}</text>']
+    parts += [f'<line x1="{x(lo):.1f}" y1="{y}" x2="{x(hi):.1f}" y2="{y}" stroke="#1b2430" stroke-width="2.5"/>',
+              f'<line x1="{x(lo):.1f}" y1="{y - 7}" x2="{x(lo):.1f}" y2="{y + 7}" stroke="#1b2430" stroke-width="2"/>',
+              f'<line x1="{x(hi):.1f}" y1="{y - 7}" x2="{x(hi):.1f}" y2="{y + 7}" stroke="#1b2430" stroke-width="2"/>',
+              f'<circle cx="{x(est):.1f}" cy="{y}" r="4.5" fill="#1b2430"/>',
+              f'<text x="{x(lo):.1f}" y="{y - 11}" text-anchor="middle">{lo:+.4g}</text>',
+              f'<text x="{x(hi):.1f}" y="{y - 11}" text-anchor="middle">{hi:+.4g}</text>', "</svg>"]
+    return "".join(parts)
+
+
+NEXT_STEPS = {
+    "ship": ["Roll out behind a flag with a holdback to confirm the effect persists.",
+             "Keep monitoring guardrails after launch; re-run the readout at full exposure."],
+    "no_ship": ["Do not launch this variant.",
+                "If a guardrail failed, diagnose the mechanism before iterating on the design."],
+    "inconclusive": ["Do not launch on this evidence.",
+                     "Resolve the missing or uncertain inputs listed here, then re-plan the sample size against the predeclared δ."],
+    "blocked": ["Do not interpret the effect estimate: the experiment's integrity failed.",
+                "Fix the assignment or logging defect and rerun the experiment from scratch."],
+}
+
+
+def _reasons(codes):
+    return [(c, dec.describe(c)) for c in codes]
+
+
+def product_context(r: dict, as_of: str) -> dict:
+    d = r["decision"]
+    p = r["primary"]
+    delta = r["policy"].get("delta")
+    is_rev = r["primary_metric"] == "revenue"
+    unit = "revenue per assigned user" if is_rev else "conversion rate (absolute)"
+    primary_rows = [
+        ("Metric", unit),
+        ("Control mean", _f(p.get("control_mean"))),
+        ("Treatment mean", _f(p.get("treatment_mean"))),
+        ("Effect (T − C)", _f(p["estimate"])),
+        ("95% repeated CI", f"[{_f(p['ci_low'])}, {_f(p['ci_high'])}]"),
+        ("Minimum worthwhile δ", "not set" if delta is None else _f(delta)),
+        ("Evidence rule", r["policy"].get("evidence_rule", "lcb_gt_zero_and_estimate_ge_delta")),
+        ("Stopped at look", f"{r['stop_look']} of {r['planned_looks']} (boundary |z| ≥ {p['boundary']:.3f})"),
+        ("Method", p.get("method", "")),
+    ]
+    if is_rev and "raw_estimate" in p:
+        primary_rows.append(("Unadjusted effect", f"{_f(p['raw_estimate'])} (CUPED variance ratio {p['variance_ratio']:.3f})"))
+    guard = [{"name": g["name"], "control": _f(g.get("control")), "treatment": _f(g.get("treatment")),
+              "diff": _f(g.get("diff")),
+              "interval": "n/a" if g.get("ci_low") is None else f"[{_f(g['ci_low'])}, {_f(g['ci_high'])}]",
+              "margin": f"+{g['margin']:g}", "status": g.get("status", "missing")} for g in r["guardrails"]]
+    limits = ["Synthetic experiment generated by the seeded simulator; not observed product data."]
+    for c in d["reason_codes"]:
+        if c.startswith("INC_MISSING_GUARDRAIL"):
+            limits.append(f"Guardrail '{c.split(':')[1]}' was not logged; safety cannot be assessed.")
+        if c.startswith("INC_GUARDRAIL_UNCERTAIN"):
+            limits.append(f"Guardrail '{c.split(':')[1]}' interval still includes harm beyond its margin.")
+        if c == "INC_INSUFFICIENT_EVIDENCE":
+            limits.append("Primary interval spans both negligible and worthwhile effects: underpowered for δ.")
+    rationale = {
+        "ship": "the primary effect clears δ under the evidence rule and every required guardrail is non-inferior.",
+        "no_ship": "the evidence rules out launching: see the reason codes.",
+        "inconclusive": "the evidence is not sufficient to launch or to reject.",
+        "blocked": "a critical integrity check failed, so the effect estimate is not interpretable.",
+    }[d["recommendation"]]
+    return {
+        "experiment_id": r["experiment_id"], "title": r["title"], "run_id": r["run_id"],
+        "engine_version": r["engine_version"], "config_hash": r["config_hash"], "as_of": as_of,
+        "source_label": "SYNTHETIC SCENARIO", "actionable": d["actionable"],
+        "recommendation": d["recommendation"], "recommendation_label": LABEL[d["recommendation"]],
+        "hypothesis": r["hypothesis"],
+        "design": [("Arms", " / ".join(r["arms"])), ("Designed allocation", " / ".join(f"{a:.0%}" for a in r["allocation"])),
+                   ("Planned units", f"{r['planned_units']:,}"), ("Monitoring", f"{r['planned_looks']} looks, Lan-DeMets O'Brien-Fleming"),
+                   ("Primary metric", r["primary_metric"])],
+        "integrity_status": r["integrity_status"], "audit": r["audit"],
+        "primary": None if d["recommendation"] == "blocked" else primary_rows,
+        "effect_svg": effect_svg(p["estimate"], p["ci_low"], p["ci_high"], delta),
+        "interval_note": "Repeated confidence interval at the stopping look (valid under the planned interim looks).",
+        "guardrails": guard, "guardrail_note": "No guardrails configured.",
+        "rationale": rationale, "reasons": _reasons(d["reason_codes"]),
+        "next_steps": NEXT_STEPS[d["recommendation"]], "limitations": limits, "trace": d["trace"],
+        "provenance": f"Source: seeded synthetic generator (configs/scenarios.yaml). Policy predeclared in the scenario config; "
+                      f"config hash {r['config_hash']}. Engine v{r['engine_version']}.",
+    }
+
+
+def archive_context(run_dir: Path, experiment_id: str, as_of: str) -> dict:
+    cfg = load_yaml("archive.yaml")
+    dcs = pd.read_parquet(run_dir / "decisions.parquet").set_index("experiment_id")
+    d = dcs.loc[experiment_id]
+    audit = pd.read_parquet(run_dir / "audit_results.parquet")
+    audit = audit[audit["experiment_id"] == experiment_id].to_dict("records")
+    comps = pd.read_parquet(run_dir / "comparisons.parquet")
+    comps = comps[comps["experiment_id"] == experiment_id]
+    exp = pd.read_parquet(DATA / "processed" / "experiments.parquet").set_index("experiment_id").loc[experiment_id]
+    codes = [c for c in d["reason_codes"].split(",") if c]
+    blocked = d["recommendation"] == "blocked"
+    primary = None
+    if d["effect"] is not None and d["effect"] == d["effect"]:
+        primary = [("Metric", "click-through rate (clicks / impressions)"),
+                   ("Comparison", d["comparison"]),
+                   ("Reference CTR", _f(d["p0"], digits=5)),
+                   ("Difference", _f(d["effect"], digits=5)),
+                   ("Relative lift", _f(d["rel_lift"], pct=True)),
+                   ("Interval (Newcombe, Bonferroni)", f"[{_f(d['ci_low'], digits=5)}, {_f(d['ci_high'], digits=5)}]"),
+                   ("Holm-adjusted p", f"{d['p_value']:.3g}"),
+                   ("Omnibus homogeneity p", f"{d['homogeneity_p']:.3g}"),
+                   ("Arm comparisons", f"{len(comps)} vs reference"),
+                   ("Sensitivity: relative MDE at 80% power", _f(d["relative_mde_80"], pct=True))]
+    limits = ["Archive data are arm-level aggregates: no user-level outcomes, covariates, revenue, guardrails or interim looks exist.",
+              "No control, planned sample size or decision threshold is recorded; allocation is assumed equal.",
+              f"Randomization-problem flag is reconstructed from the documented rule ({cfg['problem_window']['start']} to {cfg['problem_window']['end']})."]
+    if blocked:
+        limits.insert(0, "Integrity failed: effect estimates for this test should not be used for causal claims.")
+    return {
+        "experiment_id": experiment_id, "title": f"Upworthy headline test {experiment_id[:10]}…",
+        "run_id": d["run_id"], "engine_version": d["engine_version"], "config_hash": d["config_hash"], "as_of": as_of,
+        "source_label": "HISTORICAL ARCHIVE (Upworthy)", "actionable": bool(d["actionable"]),
+        "recommendation": d["recommendation"], "recommendation_label": LABEL[d["recommendation"]],
+        "hypothesis": "Historical headline/image test: which package earns the most clicks? (No hypothesis is recorded in the archive.)",
+        "design": [("Split", exp["split"]), ("Created", str(exp["experiment_date"])), ("Arms", int(exp["n_arms_valid"])),
+                   ("Impressions", f"{int(exp['impressions']):,}"), ("Allocation", exp["expected_allocation"]),
+                   ("Reference arm", f"{exp['reference_arm_id']} (earliest-created; predeclared rule)")],
+        "integrity_status": d["integrity_status"], "audit": audit,
+        "primary": None if blocked else primary,
+        "effect_svg": "" if primary is None else effect_svg(d["effect"], d["ci_low"], d["ci_high"], None),
+        "interval_note": "Highest-CTR arm vs reference; interval simultaneous over the test's comparisons. Exploratory.",
+        "guardrails": [], "guardrail_note": "The archive records no guardrail metrics (HIST_NO_GUARDRAILS).",
+        "rationale": ("integrity failed, so no recommendation is possible." if blocked else
+                      "historical statistical readout only: without a commercial threshold, guardrails or a recorded control, no launch decision is possible."),
+        "reasons": _reasons(codes), "next_steps": NEXT_STEPS[d["recommendation"]] if blocked else
+        ["Use as descriptive evidence about headline performance only.",
+         "For a launch decision, rerun as a designed experiment with a control, δ and guardrails."],
+        "limitations": limits, "trace": json.loads(d["trace"]),
+        "provenance": f"Source: Upworthy Research Archive (Matias et al., 2021; CC BY 4.0), OSF jd64p. {cfg['release']}.",
+    }
+
+
+def _blank(v) -> str:
+    return "" if v is None or (isinstance(v, float) and v != v) else str(v)
+
+
+def render(ctx: dict) -> str:
+    env = Environment(loader=FileSystemLoader(TEMPLATES), autoescape=select_autoescape(["html", "j2"]))
+    env.filters["blank"] = _blank
+    return env.get_template("memo.html.j2").render(m=ctx)
+
+
+def to_pdf(html_paths: list[Path]) -> list[Path]:
+    from playwright.sync_api import sync_playwright
+
+    out = []
+    with sync_playwright() as p:
+        browser = p.chromium.launch()
+        page = browser.new_page()
+        for h in html_paths:
+            page.goto(h.resolve().as_uri())
+            pdf = h.with_suffix(".pdf")
+            page.pdf(path=str(pdf), format="A4", print_background=True, prefer_css_page_size=True)
+            out.append(pdf)
+        browser.close()
+    return out
+
+
+def latest_run(kind: str) -> Path:
+    runs = pd.read_parquet(DATA / "runs" / "runs.parquet")
+    return DATA / "runs" / runs[runs["kind"] == kind].iloc[-1]["run_id"]
+
+
+def pick_archive_examples(run_dir: Path) -> dict[str, str]:
+    """Deterministic examples: one clean readout with a detected difference, one blocked by SRM."""
+    d = pd.read_parquet(run_dir / "decisions.parquet").sort_values("experiment_id")
+    ok = d[(d["recommendation"] == "inconclusive") & d["reason_codes"].str.contains("EVID_DIFFERENCE_DETECTED")
+           & (d["integrity_status"] == "warning")]
+    blk = d[d["reason_codes"].str.contains("BLK_SRM")]
+    return {"archive-readout": ok.iloc[0]["experiment_id"], "archive-blocked": blk.iloc[0]["experiment_id"]}
+
+
+def build_all(out_dir: Path = REPORTS / "memos", as_of: str | None = None, pdf: bool = False) -> list[Path]:
+    as_of = as_of or date.today().isoformat()
+    out_dir.mkdir(parents=True, exist_ok=True)
+    written = []
+    results = json.loads((latest_run("synthetic_product") / "results.json").read_text())
+    for r in results:
+        p = out_dir / f"{r['experiment_id']}.html"
+        p.write_text(render(product_context(r, as_of)))
+        written.append(p)
+    arch = latest_run("archive_audit")
+    for name, eid in pick_archive_examples(arch).items():
+        p = out_dir / f"{name}-{eid[:10]}.html"
+        p.write_text(render(archive_context(arch, eid, as_of)))
+        written.append(p)
+    if pdf:
+        to_pdf(written)
+    return written
+
+
+def main() -> int:
+    ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    ap.add_argument("--as-of", help="memo date (default: today); fix it for byte-identical output")
+    ap.add_argument("--pdf", action="store_true", help="also print PDFs with headless Chromium (playwright)")
+    a = ap.parse_args()
+    for p in build_all(as_of=a.as_of, pdf=a.pdf):
+        print(p.relative_to(REPORTS.parent))
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

@@ -1,0 +1,26 @@
+name: ci
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          python-version: "3.12"
+      - run: uv sync --frozen
+      - name: Unit + integration tests (archive fixtures, decision policy, synthetic scenarios)
+        run: uv run pytest -q
+      - name: Benchmark smoke run (1,000 replications)
+        run: uv run python -m expengine.benchmarks --reps 1000 --out /tmp/bench
+      - name: Synthetic scenarios reach their documented recommendations
+        run: uv run python -m expengine.product
+
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker build -t experiment-engine .

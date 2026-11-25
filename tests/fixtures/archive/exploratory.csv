@@ -1,0 +1,8 @@
+,created_at,updated_at,clickability_test_id,excerpt,headline,lede,slug,eyecatcher_id,impressions,clicks,significance,first_place,winner,share_text,square,test_week
+1,2014-11-20 10:00:00,2016-04-02 16:00:00,t_clean,,Headline A,<p>lede</p>,slug-1,img1,5000,60,50.0,False,False,,,201445
+2,2014-11-20 10:05:00,2016-04-02 16:00:00,t_clean,,Headline B,<p>lede</p>,slug-2,img1,5012,85,50.0,False,False,,,201445
+3,2014-11-21 10:00:00,2016-04-02 16:00:00,t_srm,,SRM A,<p>lede</p>,slug-3,img1,6000,70,50.0,False,False,,,201445
+4,2014-11-21 10:01:00,2016-04-02 16:00:00,t_srm,,SRM B,<p>lede</p>,slug-4,img1,4000,50,50.0,False,False,,,201445
+5,2014-11-22 09:00:00,2016-04-02 16:00:00,t_single,,Lonely,<p>lede</p>,slug-5,img1,3000,30,50.0,False,False,,,201445
+6,2014-11-23 09:00:00,2016-04-02 16:00:00,t_zero,,Zero A,<p>lede</p>,slug-6,img1,400,0,50.0,False,False,,,201445
+7,2014-11-23 09:10:00,2016-04-02 16:00:00,t_zero,,Zero B,<p>lede</p>,slug-7,img1,410,3,50.0,False,False,,,201445

@@ -1,0 +1,8 @@
+# Decision policy for product experiments (synthetic scenarios).
+# Predeclared before any data is analysed; its hash is stored on every decision.
+version: 1
+alpha: 0.05
+srm_alpha: 0.001
+max_duplicate_assignment_rate: 0.001   # share of units seen in more than one arm
+evidence_rule: lcb_gt_zero_and_estimate_ge_delta   # or: lcb_ge_delta (stricter)
+interval: sequential_rci   # repeated confidence interval at the stopping look (valid under peeking)

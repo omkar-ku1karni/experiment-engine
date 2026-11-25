@@ -1,0 +1,5 @@
+_id,created_at,updated_at,clickability_test_id,excerpt,headline,lede,slug,eyecatcher_id,impressions,clicks,significance,first_place,winner,share_text,square
+u1,2015-02-01 09:00:00,2016-04-02,t_undeployed,,Draft A,,s,e,,,,,,,
+u2,2015-02-01 09:01:00,2016-04-02,t_undeployed,,Draft B,,s,e,,,,,,,
+u3,2015-02-02 09:00:00,2016-04-02,,,Orphan,,s,e,,,,,,,
+u4,2014-12-05 09:05:00,2016-04-02,t_shared,,Shared draft,,s,e,0,0,,,,,

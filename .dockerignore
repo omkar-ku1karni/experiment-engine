@@ -1,0 +1,6 @@
+.venv
+data
+reports/memos/*.pdf
+.pytest_cache
+__pycache__
+.git

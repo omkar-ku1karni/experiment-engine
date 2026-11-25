@@ -1,0 +1,15 @@
+,created_at,updated_at,clickability_test_id,excerpt,headline,lede,slug,eyecatcher_id,impressions,clicks,significance,first_place,winner,share_text,square,test_week
+8,2014-12-01 09:00:00,2016-04-02 16:00:00,t_badrow,,Bad A,<p>lede</p>,slug-8,img1,1000,10,50.0,False,False,,,201445
+9,2014-12-01 09:01:00,2016-04-02 16:00:00,t_badrow,,Bad B,<p>lede</p>,slug-9,img1,1000,2000,50.0,False,False,,,201445
+10,not-a-date,2016-04-02 16:00:00,t_badtime,,Time A,<p>lede</p>,slug-10,img1,1000,10,50.0,False,False,,,201445
+11,2014-12-02 09:00:00,2016-04-02 16:00:00,t_badtime,,Time B,<p>lede</p>,slug-11,img1,1000,12,50.0,False,False,,,201445
+12,2013-08-01 09:00:00,2016-04-02 16:00:00,t_window,,Window A,<p>lede</p>,slug-12,img1,5000,60,50.0,False,False,,,201445
+13,2013-08-01 09:02:00,2016-04-02 16:00:00,t_window,,Window B,<p>lede</p>,slug-13,img1,5000,61,50.0,False,False,,,201445
+14,2014-12-03 09:00:00,2016-04-02 16:00:00,t_multi,,Multi A,<p>lede</p>,slug-14,img1,2500,25,50.0,False,False,,,201445
+15,2014-12-03 09:01:00,2016-04-02 16:00:00,t_multi,,Multi B,<p>lede</p>,slug-15,img1,2490,40,50.0,False,False,,,201445
+16,2014-12-03 09:02:00,2016-04-02 16:00:00,t_multi,,Multi C,<p>lede</p>,slug-16,img1,2510,26,50.0,False,False,,,201445
+17,2014-12-03 09:03:00,2016-04-02 16:00:00,t_multi,,Multi C,<p>lede</p>,slug-17,img1,2505,26,50.0,False,False,,,201445
+18,2014-12-04 09:00:00,2016-04-02 16:00:00,t_tiny,,Tiny A,<p>lede</p>,slug-18,img1,3,1,50.0,False,False,,,201445
+19,2014-12-04 09:01:00,2016-04-02 16:00:00,t_tiny,,Tiny B,<p>lede</p>,slug-19,img1,4,0,50.0,False,False,,,201445
+20,2014-12-05 09:00:00,2016-04-02 16:00:00,t_shared,,Shared A,<p>lede</p>,slug-20,img1,3000,30,50.0,False,False,,,201445
+21,2014-12-05 09:01:00,2016-04-02 16:00:00,t_shared,,Shared B,<p>lede</p>,slug-21,img1,3010,33,50.0,False,False,,,201445

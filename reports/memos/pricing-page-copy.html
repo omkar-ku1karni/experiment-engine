@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>pricing-page-copy · Experiment readout</title>
+<style>
+  :root { --ink:#1b2430; --muted:#5b6675; --line:#d9dee5; --bg:#ffffff; --soft:#f4f6f8;
+          --ship:#1d7a4f; --noship:#b23b2e; --inc:#8a6d1a; --blk:#4b4f58; }
+  @page { size: A4; margin: 14mm 14mm 12mm; }
+  * { box-sizing: border-box; }
+  body { font: 10px/1.4 -apple-system, "Segoe UI", Helvetica, Arial, sans-serif; color: var(--ink); background: var(--bg); margin: 0; }
+  .page { max-width: 800px; margin: 0 auto; padding: 18px 20px; }
+  header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid var(--ink); padding-bottom: 8px; }
+  h1 { font-size: 17px; margin: 0 0 2px; }
+  h2 { font-size: 10.5px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin: 11px 0 4px; }
+  .meta { color: var(--muted); font-size: 9.5px; text-align: right; line-height: 1.5; }
+  .badge { display: inline-block; padding: 3px 10px; border-radius: 3px; color: #fff; font-weight: 700; font-size: 12px; letter-spacing: .04em; }
+  .ship { background: var(--ship); } .no_ship { background: var(--noship); } .inconclusive { background: var(--inc); } .blocked { background: var(--blk); }
+  .src { display:inline-block; font-size: 9px; padding: 1px 6px; border: 1px solid var(--line); border-radius: 3px; color: var(--muted); margin-left: 6px; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { text-align: left; padding: 2px 6px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { color: var(--muted); font-weight: 600; font-size: 9.5px; }
+  td.num { font-variant-numeric: tabular-nums; text-align: right; white-space: nowrap; }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0 18px; }
+  .grid.wide { grid-template-columns: 1.35fr 1fr; }
+  .kv th { white-space: nowrap; width: 1%; }
+  .trace td, .trace th { font-size: 9px; }
+  .verdict { background: var(--soft); border-left: 4px solid var(--ink); padding: 8px 10px; margin-top: 10px; }
+  .codes code { display: inline-block; background: var(--soft); border: 1px solid var(--line); padding: 0 4px; margin: 1px 2px 1px 0; font-size: 9px; }
+  .pass { color: var(--ship); font-weight: 600; } .fail { color: var(--noship); font-weight: 600; } .warn { color: var(--inc); font-weight: 600; }
+  ul { margin: 3px 0 0 16px; padding: 0; }
+  footer { margin-top: 12px; border-top: 1px solid var(--line); padding-top: 6px; color: var(--muted); font-size: 8.5px; }
+  svg text { font: 9px -apple-system, Helvetica, Arial, sans-serif; fill: var(--muted); }
+</style>
+</head>
+<body><div class="page">
+<header>
+  <div>
+    <h1>Pricing page: value-based copy</h1>
+    <div><span class="badge inconclusive">INCONCLUSIVE</span>
+      <span class="src">SYNTHETIC SCENARIO</span></div>
+  </div>
+  <div class="meta">Experiment <b>pricing-page-copy</b><br>Run synthetic-53ec76dab3<br>
+    Engine v0.1.0 · config 136848f6e4ef<br>As of 2026-11-24</div>
+</header>
+
+<h2>Hypothesis and design</h2>
+<div class="grid">
+  <div>Value-based copy raises revenue per visitor.</div>
+  <table class="kv"><tr><th>Arms</th><td>control / treatment</td></tr><tr><th>Designed allocation</th><td>50% / 50%</td></tr><tr><th>Planned units</th><td>20,000</td></tr><tr><th>Monitoring</th><td>5 looks, Lan-DeMets O&#39;Brien-Fleming</td></tr><tr><th>Primary metric</th><td>revenue</td></tr></table>
+</div>
+
+<h2>Integrity verdict: <span class="pass">pass</span></h2>
+<table>
+  <tr><th>Rule</th><th>Severity</th><th>Status</th><th>Observed</th><th>Threshold</th></tr>
+  <tr><td>R001_SCHEMA_VALID</td><td>critical</td>
+    <td class="pass">pass</td>
+    <td>ok</td><td></td></tr><tr><td>R002_MIN_TWO_ARMS</td><td>critical</td>
+    <td class="pass">pass</td>
+    <td>2</td><td>2</td></tr><tr><td>R009_DUPLICATE_ASSIGNMENT</td><td>critical</td>
+    <td class="pass">pass</td>
+    <td>0.0000% of units</td><td>&lt;= 0.10%</td></tr><tr><td>R003_SRM</td><td>critical</td>
+    <td class="pass">pass</td>
+    <td>p=0.219; observed [0.5044, 0.4956]</td><td>expected [0.5, 0.5]; p&lt;0.001 fails</td></tr><tr><td>R004_SRM_SMALL_EXPECTED</td><td>info</td>
+    <td class="pass">pass</td>
+    <td>10000.0</td><td>5</td></tr><tr><td>R010_GUARDRAILS_PRESENT</td><td>warning</td>
+    <td class="pass">pass</td>
+    <td>all present</td><td></td></tr><tr><td>R011_COVARIATE_COMPLETE</td><td>info</td>
+    <td class="warn">fail</td>
+    <td>5.1% missing</td><td></td></tr><tr><td>R008_CONTROL_IDENTIFIED</td><td>warning</td>
+    <td class="pass">pass</td>
+    <td>control</td><td></td></tr>
+</table>
+
+<h2>Primary metric and uncertainty</h2>
+
+<div class="grid wide">
+  <table class="kv"><tr><th>Metric</th><td class="num">revenue per assigned user</td></tr><tr><th>Control mean</th><td class="num">3.1718</td></tr><tr><th>Treatment mean</th><td class="num">3.4727</td></tr><tr><th>Effect (T − C)</th><td class="num">0.2060</td></tr><tr><th>95% repeated CI</th><td class="num">[-0.2583, 0.6703]</td></tr><tr><th>Minimum worthwhile δ</th><td class="num">0.0500</td></tr><tr><th>Evidence rule</th><td class="num">lcb_gt_zero_and_estimate_ge_delta</td></tr><tr><th>Stopped at look</th><td class="num">5 of 5 (boundary |z| ≥ 2.064)</td></tr><tr><th>Method</th><td class="num">CUPED-adjusted Welch (pre-period revenue, treatment-blind theta)</td></tr><tr><th>Unadjusted effect</th><td class="num">0.3010 (CUPED variance ratio 0.827)</td></tr></table>
+  <div><svg width="330" height="74" viewBox="0 0 330 74" role="img" aria-label="effect interval"><line x1="112.8" y1="8" x2="112.8" y2="56" stroke="#9aa3ad" stroke-dasharray="3 3"/><text x="112.8" y="68" text-anchor="middle">0</text><line x1="125.5" y1="8" x2="125.5" y2="56" stroke="#1d7a4f" stroke-width="1.5"/><text x="125.5" y="68" text-anchor="middle" style="fill:#1d7a4f">δ 0.05</text><line x1="47.3" y1="34" x2="282.7" y2="34" stroke="#1b2430" stroke-width="2.5"/><line x1="47.3" y1="27" x2="47.3" y2="41" stroke="#1b2430" stroke-width="2"/><line x1="282.7" y1="27" x2="282.7" y2="41" stroke="#1b2430" stroke-width="2"/><circle cx="165.0" cy="34" r="4.5" fill="#1b2430"/><text x="47.3" y="23" text-anchor="middle">-0.2583</text><text x="282.7" y="23" text-anchor="middle">+0.6703</text></svg><div style="color:var(--muted);font-size:9px">Repeated confidence interval at the stopping look (valid under the planned interim looks).</div></div>
+</div>
+
+
+<h2>Guardrails</h2>
+
+<table><tr><th>Guardrail</th><th>Control</th><th>Treatment</th><th>Difference</th><th>Interval</th><th>Margin</th><th>Status</th></tr>
+<tr><td>refund_rate</td><td class="num">0.0215</td><td class="num">0.0210</td>
+<td class="num">-0.0005</td><td class="num">[-0.0047, 0.0037]</td><td class="num">+0.003</td>
+<td class="warn">uncertain</td></tr><tr><td>support_contact_rate</td><td class="num">0.0409</td><td class="num">0.0418</td>
+<td class="num">0.0008</td><td class="num">[-0.0050, 0.0066]</td><td class="num">+0.005</td>
+<td class="warn">uncertain</td></tr>
+</table>
+
+
+<div class="verdict">
+  <b>Recommendation: INCONCLUSIVE</b> — the evidence is not sufficient to launch or to reject.
+  <div class="codes" style="margin-top:4px"><code title="Primary interval is compatible with both worthwhile and non-worthwhile effects.">INC_INSUFFICIENT_EVIDENCE</code> Primary interval is compatible with both worthwhile and non-worthwhile effects.<br><code title="Guardrail interval cannot rule out harm beyond its margin. (refund_rate)">INC_GUARDRAIL_UNCERTAIN:refund_rate</code> Guardrail interval cannot rule out harm beyond its margin. (refund_rate)<br><code title="Guardrail interval cannot rule out harm beyond its margin. (support_contact_rate)">INC_GUARDRAIL_UNCERTAIN:support_contact_rate</code> Guardrail interval cannot rule out harm beyond its margin. (support_contact_rate)<br></div>
+</div>
+
+<div class="grid">
+  <div><h2>Next steps</h2><ul><li>Do not launch on this evidence.</li><li>Resolve the missing or uncertain inputs listed here, then re-plan the sample size against the predeclared δ.</li></ul></div>
+  <div><h2>Missing evidence and limitations</h2><ul><li>Synthetic experiment generated by the seeded simulator; not observed product data.</li><li>Primary interval spans both negligible and worthwhile effects: underpowered for δ.</li><li>Guardrail &#39;refund_rate&#39; interval still includes harm beyond its margin.</li><li>Guardrail &#39;support_contact_rate&#39; interval still includes harm beyond its margin.</li></ul></div>
+</div>
+
+<h2>Decision trace</h2>
+<table class="trace"><tr><th>#</th><th>Rule</th><th>Outcome</th><th>Detail</th></tr>
+<tr><td>1</td><td>integrity_gate</td><td>pass</td><td>no critical integrity failures</td></tr><tr><td>2</td><td>guardrail:refund_rate</td><td>uncertain</td><td>harm -0.00053 [-0.00474, +0.00368] vs margin +0.00300</td></tr><tr><td>3</td><td>guardrail:support_contact_rate</td><td>uncertain</td><td>harm +0.00082 [-0.00499, +0.00663] vs margin +0.00500</td></tr><tr><td>4</td><td>primary_upper_bound_vs_delta</td><td>not_below</td><td>upper +0.67028 vs delta 0.05</td></tr><tr><td>5</td><td>primary_evidence:lcb_gt_zero_and_estimate_ge_delta</td><td>fail</td><td>estimate +0.20598 [-0.25832, +0.67028] (sequential_rci) vs delta 0.05</td></tr></table>
+
+<footer>Source: seeded synthetic generator (configs/scenarios.yaml). Policy predeclared in the scenario config; config hash 136848f6e4ef. Engine v0.1.0.</footer>
+</div></body></html>

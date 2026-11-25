@@ -1,0 +1,38 @@
+# Monte Carlo benchmark design. Everything here is simulated.
+seed: 20261124
+replications: 10000          # per core scenario; MC SE of a 5% rate ~ 0.22 pp
+
+fixed:                       # A/A + effect calibration of the fixed-horizon proportion test
+  baselines: [0.01, 0.05, 0.20]
+  n_per_arm: [200, 2000, 20000]
+  treatment_shares: [0.5, 0.7]
+  relative_effects: [0.0, 0.2]
+
+srm:
+  alpha: 0.001
+  n_total: [1000, 10000, 100000]
+  cases:
+    - {name: "50/50 valid", expected: [0.5, 0.5], actual: [0.5, 0.5], valid: true}
+    - {name: "70/30 valid", expected: [0.7, 0.3], actual: [0.7, 0.3], valid: true}
+    - {name: "4-arm equal valid", expected: [0.25, 0.25, 0.25, 0.25], actual: [0.25, 0.25, 0.25, 0.25], valid: true}
+    - {name: "60/40 under 50/50", expected: [0.5, 0.5], actual: [0.6, 0.4], valid: false}
+    - {name: "51/49 under 50/50", expected: [0.5, 0.5], actual: [0.51, 0.49], valid: false}
+
+sequential:
+  alpha: 0.05
+  power: 0.8
+  looks: 10
+  relative_mde: 0.10
+  baselines: [0.01, 0.05, 0.20]
+  treatment_shares: [0.5, 0.7]
+  effect_multiples: [0.0, 0.5, 1.0, 2.0, -1.0]   # x MDE: null, half, MDE, twice, negative
+  spending: [obf, pocock]
+
+cuped:
+  n_per_arm: 1000
+  chunk: 1000
+  outcomes: [continuous, binary]
+  binary_baseline: 0.2
+  correlations: [0.0, 0.3, 0.58, 0.8]
+  missing_rates: [0.0, 0.3]
+  effects: [null, mde]

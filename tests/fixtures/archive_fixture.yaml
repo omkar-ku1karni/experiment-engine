@@ -1,0 +1,19 @@
+# Same schema as configs/archive.yaml, pointing at tiny synthetic fixtures.
+source: upworthy-fixture
+release: "synthetic test fixtures (scripts/make_fixtures.py)"
+published_benchmark_tests: 11
+files:
+  - {split: exploratory, file: exploratory.csv, url: null, sha256: 6cc3dbae46360f870e05b10c8061de1545c021d49d9a2a71d2bf5aaff112b081}
+  - {split: confirmatory, file: confirmatory.csv, url: null, sha256: 2c6f5cf4d2315693139902a6fd01dea02f34c1ff3a5a1a7d5db188ad5bf4371b}
+  - {split: holdout, file: holdout.csv, url: null, sha256: 0a92b427aed58d9cdbeca26e401e79b1ca11fcc3562271a418bfe92feeca4f0c}
+  - {split: undeployed, file: undeployed.csv, url: null, sha256: 867d8ca22ea434d96274feab1fdb216e44938768a4ccccc41197b52c53de64f1}
+deployed_splits: [exploratory, confirmatory, holdout]
+problem_window: {start: "2013-06-25", end: "2014-01-10", source_url: https://upworthy.natematias.com/about-the-archive}
+analysis:
+  allocation_assumption: equal
+  reference_arm_rule: earliest_created
+  alpha: 0.05
+  srm_alpha: 0.001
+  min_expected_count: 5
+  srm_mc_draws: 5000
+  sensitivity_power: 0.8

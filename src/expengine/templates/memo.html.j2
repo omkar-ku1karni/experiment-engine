@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>{{ m.experiment_id }} · Experiment readout</title>
+<style>
+  :root { --ink:#1b2430; --muted:#5b6675; --line:#d9dee5; --bg:#ffffff; --soft:#f4f6f8;
+          --ship:#1d7a4f; --noship:#b23b2e; --inc:#8a6d1a; --blk:#4b4f58; }
+  @page { size: A4; margin: 14mm 14mm 12mm; }
+  * { box-sizing: border-box; }
+  body { font: 10px/1.4 -apple-system, "Segoe UI", Helvetica, Arial, sans-serif; color: var(--ink); background: var(--bg); margin: 0; }
+  .page { max-width: 800px; margin: 0 auto; padding: 18px 20px; }
+  header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid var(--ink); padding-bottom: 8px; }
+  h1 { font-size: 17px; margin: 0 0 2px; }
+  h2 { font-size: 10.5px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin: 11px 0 4px; }
+  .meta { color: var(--muted); font-size: 9.5px; text-align: right; line-height: 1.5; }
+  .badge { display: inline-block; padding: 3px 10px; border-radius: 3px; color: #fff; font-weight: 700; font-size: 12px; letter-spacing: .04em; }
+  .ship { background: var(--ship); } .no_ship { background: var(--noship); } .inconclusive { background: var(--inc); } .blocked { background: var(--blk); }
+  .src { display:inline-block; font-size: 9px; padding: 1px 6px; border: 1px solid var(--line); border-radius: 3px; color: var(--muted); margin-left: 6px; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { text-align: left; padding: 2px 6px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { color: var(--muted); font-weight: 600; font-size: 9.5px; }
+  td.num { font-variant-numeric: tabular-nums; text-align: right; white-space: nowrap; }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0 18px; }
+  .grid.wide { grid-template-columns: 1.35fr 1fr; }
+  .kv th { white-space: nowrap; width: 1%; }
+  .trace td, .trace th { font-size: 9px; }
+  .verdict { background: var(--soft); border-left: 4px solid var(--ink); padding: 8px 10px; margin-top: 10px; }
+  .codes code { display: inline-block; background: var(--soft); border: 1px solid var(--line); padding: 0 4px; margin: 1px 2px 1px 0; font-size: 9px; }
+  .pass { color: var(--ship); font-weight: 600; } .fail { color: var(--noship); font-weight: 600; } .warn { color: var(--inc); font-weight: 600; }
+  ul { margin: 3px 0 0 16px; padding: 0; }
+  footer { margin-top: 12px; border-top: 1px solid var(--line); padding-top: 6px; color: var(--muted); font-size: 8.5px; }
+  svg text { font: 9px -apple-system, Helvetica, Arial, sans-serif; fill: var(--muted); }
+</style>
+</head>
+<body><div class="page">
+<header>
+  <div>
+    <h1>{{ m.title }}</h1>
+    <div><span class="badge {{ m.recommendation }}">{{ m.recommendation_label }}</span>
+      <span class="src">{{ m.source_label }}</span>{% if not m.actionable %}<span class="src">non-actionable</span>{% endif %}</div>
+  </div>
+  <div class="meta">Experiment <b>{{ m.experiment_id }}</b><br>Run {{ m.run_id }}<br>
+    Engine v{{ m.engine_version }} · config {{ m.config_hash }}<br>As of {{ m.as_of }}</div>
+</header>
+
+<h2>Hypothesis and design</h2>
+<div class="grid">
+  <div>{{ m.hypothesis }}</div>
+  <table class="kv">{% for k, v in m.design %}<tr><th>{{ k }}</th><td>{{ v }}</td></tr>{% endfor %}</table>
+</div>
+
+<h2>Integrity verdict: <span class="{{ 'fail' if m.integrity_status == 'blocked' else ('warn' if m.integrity_status == 'warning' else 'pass') }}">{{ m.integrity_status }}</span></h2>
+<table>
+  <tr><th>Rule</th><th>Severity</th><th>Status</th><th>Observed</th><th>Threshold</th></tr>
+  {% for r in m.audit %}<tr><td>{{ r.rule_id }}</td><td>{{ r.severity }}</td>
+    <td class="{{ 'fail' if r.status == 'fail' and r.severity == 'critical' else ('warn' if r.status == 'fail' else 'pass') }}">{{ r.status }}</td>
+    <td>{{ r.observed | blank }}</td><td>{{ r.threshold | blank }}</td></tr>{% endfor %}
+</table>
+
+<h2>Primary metric and uncertainty</h2>
+{% if m.primary %}
+<div class="grid wide">
+  <table class="kv">{% for k, v in m.primary %}<tr><th>{{ k }}</th><td class="num">{{ v }}</td></tr>{% endfor %}</table>
+  <div>{{ m.effect_svg | safe }}<div style="color:var(--muted);font-size:9px">{{ m.interval_note }}</div></div>
+</div>
+{% else %}<p>No valid primary estimate: the analysis was not run because integrity failed.</p>{% endif %}
+
+<h2>Guardrails</h2>
+{% if m.guardrails %}
+<table><tr><th>Guardrail</th><th>Control</th><th>Treatment</th><th>Difference</th><th>Interval</th><th>Margin</th><th>Status</th></tr>
+{% for g in m.guardrails %}<tr><td>{{ g.name }}</td><td class="num">{{ g.control }}</td><td class="num">{{ g.treatment }}</td>
+<td class="num">{{ g.diff }}</td><td class="num">{{ g.interval }}</td><td class="num">{{ g.margin }}</td>
+<td class="{{ 'fail' if g.status in ('harm',) else ('warn' if g.status in ('uncertain','missing') else 'pass') }}">{{ g.status }}</td></tr>{% endfor %}
+</table>
+{% else %}<p>{{ m.guardrail_note }}</p>{% endif %}
+
+<div class="verdict">
+  <b>Recommendation: {{ m.recommendation_label }}</b> — {{ m.rationale }}
+  <div class="codes" style="margin-top:4px">{% for c, d in m.reasons %}<code title="{{ d }}">{{ c }}</code> {{ d }}<br>{% endfor %}</div>
+</div>
+
+<div class="grid">
+  <div><h2>Next steps</h2><ul>{% for s in m.next_steps %}<li>{{ s }}</li>{% endfor %}</ul></div>
+  <div><h2>Missing evidence and limitations</h2><ul>{% for s in m.limitations %}<li>{{ s }}</li>{% endfor %}</ul></div>
+</div>
+
+<h2>Decision trace</h2>
+<table class="trace"><tr><th>#</th><th>Rule</th><th>Outcome</th><th>Detail</th></tr>
+{% for t in m.trace %}<tr><td>{{ t.step }}</td><td>{{ t.rule }}</td><td>{{ t.outcome }}</td><td>{{ t.detail }}</td></tr>{% endfor %}</table>
+
+<footer>{{ m.provenance }}</footer>
+</div></body></html>

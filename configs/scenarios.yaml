@@ -1,0 +1,129 @@
+# Synthetic product experiments (SIMULATED, labelled source=synthetic everywhere).
+# Each one carries its own predeclared policy: delta = minimum commercially worthwhile
+# absolute effect on the primary metric; guardrail margins = largest acceptable harm.
+# `expected_recommendation` documents the case each scenario demonstrates and is asserted in tests.
+
+defaults: &defaults
+  days: 14
+  planned_looks: 5
+  baseline_conversion: 0.05
+  value_mu: 3.6            # order value ~ lognormal, mean ~ 44
+  value_sigma: 0.6
+  latent_correlation: 0.6
+  covariate_missing_rate: 0.05
+  guardrails:
+    refund_rate: {base: 0.020, effect: 0.0}
+    support_contact_rate: {base: 0.040, effect: 0.0}
+
+revenue_policy: &revenue_policy
+  delta: 0.05              # +0.05 revenue per assigned user (~2.3% of baseline)
+  evidence_rule: lcb_gt_zero_and_estimate_ge_delta
+  guardrails:
+    - {name: refund_rate, margin: 0.003, harm_direction: 1, required: true}
+    - {name: support_contact_rate, margin: 0.005, harm_direction: 1, required: true}
+
+scenarios:
+  - <<: *defaults
+    experiment_id: checkout-redesign
+    title: "Checkout: one-page redesign"
+    hypothesis: "A one-page checkout raises conversion without increasing refunds or support contacts."
+    n_units: 300000
+    conversion_lift: 0.08
+    primary_metric: revenue
+    policy: *revenue_policy
+    seed: 11
+    expected_recommendation: ship
+
+  - <<: *defaults
+    experiment_id: search-ranking-v2
+    title: "Search: learning-to-rank v2"
+    hypothesis: "The new ranker raises search-to-purchase conversion by at least 5% relative."
+    n_units: 600000
+    baseline_conversion: 0.10
+    conversion_lift: 0.01          # real but commercially trivial
+    primary_metric: conversion
+    policy:
+      delta: 0.005                 # +0.5 pp conversion
+      evidence_rule: lcb_gt_zero_and_estimate_ge_delta
+      guardrails:
+        - {name: refund_rate, margin: 0.003, harm_direction: 1, required: true}
+        - {name: support_contact_rate, margin: 0.005, harm_direction: 1, required: true}
+    seed: 12
+    expected_recommendation: no_ship
+
+  - <<: *defaults
+    experiment_id: recs-carousel
+    title: "Recommendations: aggressive cross-sell carousel"
+    hypothesis: "A cross-sell carousel lifts revenue per user without raising refunds."
+    n_units: 200000
+    conversion_lift: 0.10
+    guardrails:
+      refund_rate: {base: 0.020, effect: 0.008}     # deteriorates
+      support_contact_rate: {base: 0.040, effect: 0.0}
+    primary_metric: revenue
+    policy: *revenue_policy
+    seed: 13
+    expected_recommendation: no_ship
+
+  - <<: *defaults
+    experiment_id: onboarding-checklist
+    title: "Onboarding: guided checklist"
+    hypothesis: "A guided checklist raises first-week conversion."
+    n_units: 50000
+    actual_allocation: [0.6, 0.4]  # broken bucketing: 60/40 delivered under a 50/50 design
+    conversion_lift: 0.05
+    primary_metric: conversion
+    policy:
+      delta: 0.002
+      guardrails:
+        - {name: refund_rate, margin: 0.003, harm_direction: 1, required: true}
+        - {name: support_contact_rate, margin: 0.005, harm_direction: 1, required: true}
+    seed: 14
+    expected_recommendation: blocked
+
+  - <<: *defaults
+    experiment_id: referral-banner
+    title: "Referral: banner placement"
+    hypothesis: "Moving the referral banner above the fold raises revenue per user."
+    n_units: 80000
+    duplicate_assignment_rate: 0.02   # 2% of users logged in both arms
+    conversion_lift: 0.05
+    primary_metric: revenue
+    policy: *revenue_policy
+    seed: 15
+    expected_recommendation: blocked
+
+  - <<: *defaults
+    experiment_id: pricing-page-copy
+    title: "Pricing page: value-based copy"
+    hypothesis: "Value-based copy raises revenue per visitor."
+    n_units: 20000
+    conversion_lift: 0.03
+    primary_metric: revenue
+    policy: *revenue_policy
+    seed: 16
+    expected_recommendation: inconclusive
+
+  - <<: *defaults
+    experiment_id: cart-reminder-email
+    title: "Lifecycle: abandoned-cart reminder"
+    hypothesis: "A reminder email recovers abandoned carts."
+    n_units: 200000
+    conversion_lift: 0.10
+    drop_guardrails: [support_contact_rate]     # guardrail logging was never shipped
+    primary_metric: revenue
+    policy: *revenue_policy
+    seed: 17
+    expected_recommendation: inconclusive
+
+  - <<: *defaults
+    experiment_id: aa-70-30
+    title: "Platform: A/A test at 70/30 allocation"
+    hypothesis: "Identical experiences; checks that a valid unequal allocation is not flagged as SRM."
+    n_units: 100000
+    allocation: [0.3, 0.7]
+    conversion_lift: 0.0
+    primary_metric: revenue
+    policy: *revenue_policy
+    seed: 18
+    expected_recommendation: inconclusive

@@ -1,0 +1,10 @@
+.venv/
+__pycache__/
+.pytest_cache/
+.DS_Store
+# Source data and generated outputs are rebuilt by `make`; raw archive files are
+# downloaded from OSF (CC BY 4.0) and verified against configs/archive.yaml.
+data/raw/
+data/processed/
+data/runs/
+data/synthetic/
